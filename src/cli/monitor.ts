@@ -44,9 +44,13 @@ function clearScreen(): void {
   process.stdout.write("\x1B[2J\x1B[0f");
 }
 
-// Format price with color
-function formatPrice(price: number, decimals = 2): string {
-  return price.toFixed(decimals);
+// Format price with appropriate decimal places based on magnitude
+function formatPrice(price: number, decimals?: number): string {
+  if (decimals !== undefined) return price.toFixed(decimals);
+  if (price >= 1000) return price.toFixed(2);
+  if (price >= 1) return price.toFixed(4);
+  if (price >= 0.01) return price.toFixed(6);
+  return price.toFixed(8);
 }
 
 // Format the display
