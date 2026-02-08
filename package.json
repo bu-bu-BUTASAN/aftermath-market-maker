@@ -1,51 +1,51 @@
 {
-    "name": "aftermath-market-maker",
-    "version": "0.1.0",
-    "description": "Multi-exchange perpetuals market maker bot supporting Aftermath and Hyperliquid",
-    "type": "module",
-    "main": "dist/index.js",
-    "scripts": {
-        "bot": "tsx src/cli/bot.ts",
-        "monitor": "tsx src/cli/monitor.ts",
-        "scanner": "tsx src/cli/scanner.ts",
-        "build": "tsc",
-        "dev": "tsx watch src/cli/bot.ts",
-        "lint": "biome check .",
-        "lint:fix": "biome check --write .",
-        "format": "biome format --write .",
-        "test": "vitest",
-        "test:watch": "vitest watch"
-    },
-    "keywords": [
-        "market-maker",
-        "perpetuals",
-        "aftermath",
-        "hyperliquid",
-        "sui",
-        "crypto",
-        "trading-bot"
-    ],
-    "author": "",
-    "license": "MIT",
-    "dependencies": {
-        "@nktkas/hyperliquid": "^0.30.0",
-        "@mysten/sui": "^1.14.0",
-        "viem": "^2.21.0",
-        "ws": "^8.18.0",
-        "eventsource": "^2.0.2",
-        "dotenv": "^16.4.0",
-        "commander": "^12.1.0"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "^1.9.0",
-        "@types/node": "^20.17.0",
-        "@types/eventsource": "^1.1.15",
-        "@types/ws": "^8.5.13",
-        "typescript": "^5.6.0",
-        "vitest": "^2.1.0",
-        "tsx": "^4.19.0"
-    },
-    "engines": {
-        "node": ">=20.0.0"
-    }
+  "name": "aftermath-market-maker",
+  "version": "0.1.0",
+  "description": "Multi-exchange perpetuals market maker bot supporting Aftermath and Hyperliquid",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "bot": "tsx src/cli/bot.ts",
+    "monitor": "tsx src/cli/monitor.ts",
+    "scanner": "tsx src/cli/scanner.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/cli/bot.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "market-maker",
+    "perpetuals",
+    "aftermath",
+    "hyperliquid",
+    "sui",
+    "crypto",
+    "trading-bot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nktkas/hyperliquid": "^0.30.0",
+    "@mysten/sui": "^1.14.0",
+    "viem": "^2.21.0",
+    "ws": "^8.18.0",
+    "eventsource": "^2.0.2",
+    "dotenv": "^16.4.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/node": "^20.17.0",
+    "@types/eventsource": "^1.1.15",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "tsx": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }
