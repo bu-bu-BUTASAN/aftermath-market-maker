@@ -29,14 +29,19 @@ export async function placeOrder(
     // "Gtc" = Good Till Cancel (standard limit order)
     const tif: "Alo" | "Gtc" = order.postOnly ? "Alo" : "Gtc";
 
+    // Format price and size to avoid floating-point artifacts
+    // Hyperliquid requires properly formatted decimal strings
+    const priceStr = order.price.toFixed(market.pricePrecision);
+    const sizeStr = order.size.toFixed(market.sizePrecision);
+
     // Prepare order parameters for Hyperliquid
     const orderParams = {
       orders: [
         {
           a: assetId, // Asset ID
           b: order.side === "buy", // Position side (true for long/buy, false for short/sell)
-          p: order.price.toString(), // Price as string
-          s: order.size.toString(), // Size as string
+          p: priceStr, // Price as string (fixed decimal places)
+          s: sizeStr, // Size as string (fixed decimal places)
           r: order.reduceOnly ?? false, // Reduce-only flag
           t: { limit: { tif } } as const, // Order type (limit with time-in-force)
           c: order.clientId as `0x${string}` | undefined, // Client Order ID (optional)
@@ -211,19 +216,37 @@ export async function cancelAllOrders(clients: HyperliquidClients, symbol?: stri
     });
 
     // Cancel all orders in a single batch request
-    const response = await clients.exchange.cancel({ cancels });
+    let statuses: unknown[];
+    try {
+      const response = await clients.exchange.cancel({ cancels });
+      statuses = response.response.data.statuses;
+    } catch (error) {
+      // SDK may throw ApiRequestError that wraps a valid response with error statuses
+      const apiError = error as { response?: { response?: { data?: { statuses?: unknown[] } } } };
+      if (apiError.response?.response?.data?.statuses) {
+        statuses = apiError.response.response.data.statuses;
+      } else {
+        logger.error("Failed to cancel all Hyperliquid orders", error);
+        throw error;
+      }
+    }
 
-    // Check results
+    // Check results - "already canceled or filled" is not a real failure
     let successCount = 0;
     let failCount = 0;
 
-    response.response.data.statuses.forEach((cancelStatus, index) => {
+    statuses.forEach((cancelStatus, index) => {
       if (cancelStatus === "success") {
         successCount++;
       } else {
         const errorStatus = cancelStatus as { error: string };
-        failCount++;
-        logger.warn(`Failed to cancel order ${openOrders[index]?.id}: ${errorStatus.error}`);
+        const isAlreadyGone = errorStatus.error?.includes("already canceled, or filled");
+        if (isAlreadyGone) {
+          successCount++;
+        } else {
+          failCount++;
+          logger.warn(`Failed to cancel order ${openOrders[index]?.id}: ${errorStatus.error}`);
+        }
       }
     });
 

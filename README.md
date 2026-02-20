@@ -28,7 +28,7 @@ npm run bot -- --exchange hyperliquid --symbol BTC
 npm run bot -- --exchange aftermath --symbol BTC
 
 # Monitor market data
-npm run monitor -- --exchange hyperliquid --symbol BTC
+npm run monitor -- --exchange aftermath --symbol BTC
 ```
 
 ## Environment Variables

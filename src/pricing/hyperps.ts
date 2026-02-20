@@ -9,138 +9,138 @@ export type PriceCallback = (price: number, timestamp: number) => void;
  * For pre-market tokens without external spot price
  */
 export class HyperpsPriceFeed {
-  private transport: HttpTransport | null = null;
-  private info: InfoClient | null = null;
-  private symbol: string;
-  private callback: PriceCallback;
-  private isTestnet: boolean;
-  private pollInterval: NodeJS.Timeout | null = null;
-  private pollMs: number;
-  private lastPrice: number | null = null;
-  private lastTimestamp: number | null = null;
-  private _connected = false;
+    private transport: HttpTransport | null = null;
+    private info: InfoClient | null = null;
+    private symbol: string;
+    private callback: PriceCallback;
+    private isTestnet: boolean;
+    private pollInterval: NodeJS.Timeout | null = null;
+    private pollMs: number;
+    private lastPrice: number | null = null;
+    private lastTimestamp: number | null = null;
+    private _connected = false;
 
-  /**
-   * Create a Hyperps price feed
-   * @param symbol - Trading symbol (e.g., "MEGA", "PURR")
-   * @param callback - Called on each price update with oracle price (8h EMA)
-   * @param isTestnet - Use testnet (default: false)
-   * @param pollMs - Polling interval in milliseconds (default: 2000)
-   */
-  constructor(symbol: string, callback: PriceCallback, isTestnet = false, pollMs = 2000) {
-    this.symbol = symbol.toUpperCase();
-    this.callback = callback;
-    this.isTestnet = isTestnet;
-    this.pollMs = pollMs;
-  }
-
-  /**
-   * Connect and start polling
-   */
-  async connect(): Promise<void> {
-    if (this._connected) {
-      return;
+    /**
+     * Create a Hyperps price feed
+     * @param symbol - Trading symbol (e.g., "MEGA", "PURR")
+     * @param callback - Called on each price update with oracle price (8h EMA)
+     * @param isTestnet - Use testnet (default: false)
+     * @param pollMs - Polling interval in milliseconds (default: 2000)
+     */
+    constructor(symbol: string, callback: PriceCallback, isTestnet = false, pollMs = 5000) {
+        this.symbol = symbol.toUpperCase();
+        this.callback = callback;
+        this.isTestnet = isTestnet;
+        this.pollMs = pollMs;
     }
 
-    logger.info(
-      `Connecting to Hyperps price feed for ${this.symbol} (${this.isTestnet ? "testnet" : "mainnet"})`
-    );
+    /**
+     * Connect and start polling
+     */
+    async connect(): Promise<void> {
+        if (this._connected) {
+            return;
+        }
 
-    // Initialize HTTP transport and info client
-    this.transport = new HttpTransport({ isTestnet: this.isTestnet });
-    this.info = new InfoClient({ transport: this.transport });
+        logger.info(
+            `Connecting to Hyperps price feed for ${this.symbol} (${this.isTestnet ? "testnet" : "mainnet"})`
+        );
 
-    // Fetch initial price
-    await this.fetchOraclePrice();
+        // Initialize HTTP transport and info client
+        this.transport = new HttpTransport({ isTestnet: this.isTestnet });
+        this.info = new InfoClient({ transport: this.transport });
 
-    // Start polling
-    this.pollInterval = setInterval(() => {
-      this.fetchOraclePrice().catch((error) => {
-        logger.debug("Failed to fetch Hyperps oracle price:", error);
-      });
-    }, this.pollMs);
+        // Fetch initial price
+        await this.fetchOraclePrice();
 
-    this._connected = true;
-    logger.info(`Hyperps price feed connected for ${this.symbol} (oracle 8h EMA)`);
-  }
+        // Start polling
+        this.pollInterval = setInterval(() => {
+            this.fetchOraclePrice().catch((error) => {
+                logger.debug("Failed to fetch Hyperps oracle price:", error);
+            });
+        }, this.pollMs);
 
-  /**
-   * Fetch oracle price (8h EMA) from metaAndAssetCtxs
-   */
-  private async fetchOraclePrice(): Promise<void> {
-    if (!this.info) {
-      return;
+        this._connected = true;
+        logger.info(`Hyperps price feed connected for ${this.symbol} (oracle 8h EMA)`);
     }
 
-    try {
-      const [meta, assetCtxs] = await this.info.metaAndAssetCtxs();
+    /**
+     * Fetch oracle price (8h EMA) from metaAndAssetCtxs
+     */
+    private async fetchOraclePrice(): Promise<void> {
+        if (!this.info) {
+            return;
+        }
 
-      // Find the asset by symbol
-      const assetIndex = meta.universe.findIndex(
-        (asset) => asset.name.toUpperCase() === this.symbol
-      );
+        try {
+            const [meta, assetCtxs] = await this.info.metaAndAssetCtxs();
 
-      if (assetIndex === -1) {
-        logger.debug(`Asset ${this.symbol} not found in Hyperliquid universe`);
-        return;
-      }
+            // Find the asset by symbol
+            const assetIndex = meta.universe.findIndex(
+                (asset) => asset.name.toUpperCase() === this.symbol
+            );
 
-      const ctx = assetCtxs[assetIndex];
-      if (!ctx) {
-        return;
-      }
+            if (assetIndex === -1) {
+                logger.debug(`Asset ${this.symbol} not found in Hyperliquid universe`);
+                return;
+            }
 
-      // oraclePx is the 8-hour EMA used for funding calculation
-      const oraclePrice = Number.parseFloat(ctx.oraclePx);
-      const timestamp = Date.now();
+            const ctx = assetCtxs[assetIndex];
+            if (!ctx) {
+                return;
+            }
 
-      if (!Number.isNaN(oraclePrice) && oraclePrice > 0) {
-        this.lastPrice = oraclePrice;
-        this.lastTimestamp = timestamp;
-        this.callback(oraclePrice, timestamp);
-      }
-    } catch (error) {
-      logger.debug("Error fetching Hyperps oracle price:", error);
-      throw error;
-    }
-  }
+            // oraclePx is the 8-hour EMA used for funding calculation
+            const oraclePrice = Number.parseFloat(ctx.oraclePx);
+            const timestamp = Date.now();
 
-  /**
-   * Disconnect and stop polling
-   */
-  disconnect(): void {
-    logger.info("Disconnecting from Hyperps price feed");
-
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
-      this.pollInterval = null;
+            if (!Number.isNaN(oraclePrice) && oraclePrice > 0) {
+                this.lastPrice = oraclePrice;
+                this.lastTimestamp = timestamp;
+                this.callback(oraclePrice, timestamp);
+            }
+        } catch (error) {
+            logger.debug("Error fetching Hyperps oracle price:", error);
+            throw error;
+        }
     }
 
-    this.transport = null;
-    this.info = null;
-    this._connected = false;
-  }
+    /**
+     * Disconnect and stop polling
+     */
+    disconnect(): void {
+        logger.info("Disconnecting from Hyperps price feed");
 
-  /**
-   * Get the last received oracle price
-   */
-  getLastPrice(): number | null {
-    return this.lastPrice;
-  }
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+        }
 
-  /**
-   * Get the last price timestamp
-   */
-  getLastTimestamp(): number | null {
-    return this.lastTimestamp;
-  }
+        this.transport = null;
+        this.info = null;
+        this._connected = false;
+    }
 
-  /**
-   * Check if connected
-   */
-  get connected(): boolean {
-    return this._connected;
-  }
+    /**
+     * Get the last received oracle price
+     */
+    getLastPrice(): number | null {
+        return this.lastPrice;
+    }
+
+    /**
+     * Get the last price timestamp
+     */
+    getLastTimestamp(): number | null {
+        return this.lastTimestamp;
+    }
+
+    /**
+     * Check if connected
+     */
+    get connected(): boolean {
+        return this._connected;
+    }
 }
 
 /**
@@ -150,11 +150,11 @@ export class HyperpsPriceFeed {
  * @param isTestnet - Use testnet
  */
 export async function createHyperpsPriceFeed(
-  symbol: string,
-  callback: PriceCallback,
-  isTestnet = false
+    symbol: string,
+    callback: PriceCallback,
+    isTestnet = false
 ): Promise<HyperpsPriceFeed> {
-  const feed = new HyperpsPriceFeed(symbol, callback, isTestnet);
-  await feed.connect();
-  return feed;
+    const feed = new HyperpsPriceFeed(symbol, callback, isTestnet);
+    await feed.connect();
+    return feed;
 }
