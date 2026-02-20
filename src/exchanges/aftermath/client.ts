@@ -13,7 +13,7 @@ export class AftermathClient {
    */
   constructor(baseUrl?: string) {
     this.baseUrl =
-      baseUrl || process.env.AF_BASE_URL || "https://mainnet-perpetuals-preview.aftermath.finance";
+      baseUrl || process.env.AF_BASE_URL || "https://aftermath.finance";
     logger.info(`AftermathClient initialized with base URL: ${this.baseUrl}`);
   }
 

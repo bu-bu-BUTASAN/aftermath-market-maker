@@ -22,10 +22,17 @@ class Logger {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.level];
   }
 
+  private formatArg(arg: unknown): string {
+    if (arg instanceof Error) {
+      return arg.stack || `${arg.name}: ${arg.message}`;
+    }
+    return JSON.stringify(arg);
+  }
+
   private formatMessage(level: LogLevel, message: string, ...args: unknown[]): string {
     const timestamp = new Date().toISOString();
     const levelStr = level.toUpperCase().padEnd(5);
-    const argsStr = args.length > 0 ? ` ${JSON.stringify(args)}` : "";
+    const argsStr = args.length > 0 ? ` ${args.map((a) => this.formatArg(a)).join(" ")}` : "";
     return `[${timestamp}] [${levelStr}] ${message}${argsStr}`;
   }
 
